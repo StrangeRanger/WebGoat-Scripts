@@ -5,7 +5,7 @@
 # shellcheck disable=SC2034
 #
 ########################################################################################
-#### [ Variables ]
+####[ Variables ]#######################################################################
 
 
 # Change this value with your current JSESSIONID.
@@ -23,9 +23,7 @@ current_session_timestamp=0
 previous_session_timestamp=0
 
 
-#### End of [ Variables ]
-########################################################################################
-#### [ Main ]
+#### [ Main ]###########################################################################
 
 
 echo "=========== Searching for session ==========="
@@ -77,7 +75,5 @@ for (( timestamp=session_start_time; timestamp<=session_end_time; timestamp++ ))
     echo "$session_id-$timestamp: $response"
 done
 
-
-#### End of [ Main ]
 ########################################################################################
 
